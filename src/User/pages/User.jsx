@@ -15,7 +15,7 @@ function User() {
         const fetchUsers = async () => {
             // setIsLoading(true);
             try {
-                const responseData = await sendRequest("http://localhost:5999/api/users");
+                const responseData = await sendRequest(`${process.env.REACT_APP_BACKEND_URL}/users`);
                 // const responseData = await response.json();
 
                 // if (!response.ok) {

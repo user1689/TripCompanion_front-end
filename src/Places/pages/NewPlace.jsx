@@ -13,6 +13,7 @@ import { AuthContext } from "../../shared/context/auth-context";
 import ErrorModal from "../../shared/UIElements/ErrorModal";
 import LoadingSpinner from "../../shared/UIElements/LoadingSpinner";
 import { useHistory } from "react-router-dom";
+import ImageUpload from "../../shared/UIElements/ImageUpload";
 
 export default function NewPlace() {
     const auth = useContext(AuthContext);
@@ -30,6 +31,10 @@ export default function NewPlace() {
                 value: "",
                 isValid: false,
             },
+            image: {
+                value: null,
+                isValid: false,
+            },
         },
         false
     );
@@ -42,28 +47,44 @@ export default function NewPlace() {
         // console.log(auth.userId);
         // console.log(formState.inputs);
         try {
+            const formData = new FormData();
+            formData.append("title", formState.inputs.title.value);
+            formData.append("description", formState.inputs.description.value);
+            formData.append("address", formState.inputs.address.value);
+            formData.append("creator", auth.userId);
+            formData.append("image", formState.inputs.image.value);
             await sendRequest(
-                "http://localhost:5999/api/places",
+                process.env.REACT_APP_BACKEND_URL + "/places",
                 "POST",
-                JSON.stringify({
-                    title: formState.inputs.title.value,
-                    description: formState.inputs.description.value,
-                    address: formState.inputs.address.value,
-                    creator: auth.userId,
-                }),
+                // JSON.stringify({
+                //     title: formState.inputs.title.value,
+                //     description: formState.inputs.description.value,
+                //     address: formState.inputs.address.value,
+                //     creator: auth.userId,
+                // }),
+                // {
+                //     "Content-Type": "application/json",
+                // }
+                formData,
                 {
-                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + auth.token,
                 }
             );
             // redirect user to success page
-            histroy.push('/');
+            histroy.push("/");
         } catch (error) {}
     };
     return (
         <React.Fragment>
             <ErrorModal error={error} onClear={clearError}></ErrorModal>
             <form className="place-form" onSubmit={placeSubmitHandler}>
-                { isLoading && <LoadingSpinner asOverlay></LoadingSpinner>}
+                {isLoading && <LoadingSpinner asOverlay></LoadingSpinner>}
+                <ImageUpload
+                    center
+                    id="image"
+                    onInput={InputHandler}
+                    // errorText="Please provide an image"
+                ></ImageUpload>
                 <Input
                     id="title"
                     type="text"
@@ -89,6 +110,7 @@ export default function NewPlace() {
                     errorText="Please enter a valid address."
                     onInput={InputHandler}
                 />
+
                 <Button type="submit" disabled={!formState.isValid}>
                     ADD PLACE
                 </Button>

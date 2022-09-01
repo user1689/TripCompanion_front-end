@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import { useParams, useHistory } from "react-router-dom";
 import Button from "../../shared/FormElements/Button";
 import Input from "../../shared/FormElements/Input";
 import { useForm } from "../../shared/hooks/form-hook";
@@ -7,6 +7,7 @@ import useHttpClient from "../../shared/hooks/http-hook";
 import Card from "../../shared/UIElements/Card";
 import ErrorModal from "../../shared/UIElements/ErrorModal";
 import LoadingSpinner from "../../shared/UIElements/LoadingSpinner";
+import {AuthContext} from "../../shared/context/auth-context"
 
 import {
     VALIDATOR_MINLENGTH,
@@ -46,6 +47,8 @@ export default function UpdatePlace() {
     const { isLoading, error, sendRequest, clearError } = useHttpClient();
     const [loadedPlace, setLoadedPlace] = useState(null);
     let placeId = useParams().placeId;
+    const history = useHistory();
+    const auth = useContext(AuthContext);
     // let identifiedPlace = [];
     // for (let i = 0; i < PLACES.length; i++) {
     //   console.log(PLACES[i].id);
@@ -74,7 +77,7 @@ export default function UpdatePlace() {
         const fetchPlace = async () => {
             try {
                 const responseData = await sendRequest(
-                    `http://localhost:5999/api/places/${placeId}`
+                    `${process.env.REACT_APP_BACKEND_URL}/places/${placeId}`
                 );
                 setLoadedPlace(responseData.place);
                 setFormData(
@@ -139,9 +142,27 @@ export default function UpdatePlace() {
         );
     }
 
-    const placeUpdateHandler = (event) => {
+    const placeUpdateHandler = async (event) => {
+        // console.log(111);
+        // console.log(placeId);
         event.preventDefault();
         // console.log(formState.inputs);
+        try {
+            await sendRequest(
+                `${process.env.REACT_APP_BACKEND_URL}/places/${placeId}`,
+                "POST",
+                JSON.stringify({
+                    title: formState.inputs.title.value,
+                    description: formState.inputs.description.value,
+                }),
+                {
+                    "Content-Type": "application/json",
+                    Authorization: 'Bearer ' + auth.token
+                }
+            );
+            // console.log(11);
+            history.push(`/${auth.userId}/places`);
+        } catch (error) {}
     };
 
     return (
@@ -157,8 +178,8 @@ export default function UpdatePlace() {
                         validators={[VALIDATOR_REQUIRE()]}
                         errorText="Please enter a valid text"
                         onInput={InputHandler}
-                        initialValue={formState.inputs.title.value}
-                        initialValid={formState.inputs.title.isValid}
+                        initialValue={loadedPlace.title}
+                        initialValid={true}
                     />
                     <Input
                         id="description"
@@ -167,8 +188,8 @@ export default function UpdatePlace() {
                         validators={[VALIDATOR_MINLENGTH(5)]}
                         errorText="Please enter a valid description (at least 5 characters)."
                         onInput={InputHandler}
-                        initialValue={formState.inputs.description.value}
-                        initialValid={formState.inputs.title.isValid}
+                        initialValue={loadedPlace.description}
+                        initialValid={true}
                     />
                     <Button type="submit" disabled={!formState.isValid}>
                         UPDATE PLACE

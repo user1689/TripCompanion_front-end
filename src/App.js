@@ -1,29 +1,22 @@
-import React, { useCallback, useState } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom'
 
-
-import User from './User/pages/User';
-import UserPlace from './Places/pages/UserPlace'
 import MainNavigation from './shared/UIElements/MainNavigation';
-import NewPlace from './Places/pages/NewPlace';
-import UpdatePlace from './Places/pages/UpdatePlace';
-import Auth from './User/pages/Auth';
 import { AuthContext } from './shared/context/auth-context';
+import { useAuth } from './shared/hooks/auth-hook';
+import LoadingSpinner from './shared/UIElements/LoadingSpinner';
 
+const User = React.lazy(() => import('./User/pages/User'));
+const NewPlace = React.lazy(() => import('./Places/pages/NewPlace'));
+const UserPlace = React.lazy(() => import('./Places/pages/UserPlace'));
+const UpdatePlace = React.lazy(() => import('./Places/pages/UpdatePlace'));
+const Auth = React.lazy(() => import('./User/pages/Auth'));
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userId, setUserId] = useState(null);
-  const login = useCallback((uid) => {
-    setIsLoggedIn(true);
-    setUserId(uid);
-  }, []);
-  const logout = useCallback((uid) => {
-    setIsLoggedIn(false);
-    setUserId(null);
-  }, []);
+  const { token, login, logout, userId } = useAuth();
+
   let routes;
-  if (isLoggedIn) {
+  if (token) {
     routes = (
       <Switch>
         <Route path='/' component={User} exact />
@@ -44,13 +37,13 @@ function App() {
     );
   }
   return (
-    <AuthContext.Provider value={{ isLoggedIn, userId, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn: !!token, token: token, userId, login, logout }}>
       <BrowserRouter>
         <MainNavigation></MainNavigation>
         <main>
 
           {/* <Route path='/places' exact/> */}
-          {routes}
+          <Suspense fallback={<div className="center"><LoadingSpinner/></div>}>{routes}</Suspense>
 
         </main>
       </BrowserRouter>

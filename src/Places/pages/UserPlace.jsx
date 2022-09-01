@@ -4,7 +4,6 @@ import useHttpClient from "../../shared/hooks/http-hook";
 import ErrorModal from "../../shared/UIElements/ErrorModal";
 import LoadingSpinner from "../../shared/UIElements/LoadingSpinner";
 
-
 import PlaceList from "../components/PlaceList";
 
 // const PLACES = [
@@ -15,7 +14,7 @@ import PlaceList from "../components/PlaceList";
 //         imageURL: "/images/spaceNeedle.jpg",
 //         address: "400 Broad Street, Seattle, 98109",
 //         location: {
-//             lat: 47.620671759266315, 
+//             lat: 47.620671759266315,
 //             lng: -122.34932127106136
 //         },
 //         creator: "u1",
@@ -27,7 +26,7 @@ import PlaceList from "../components/PlaceList";
 //         imageURL: "/images/spaceNeedle.jpg",
 //         address: "400 Broad Street, Seattle, 98109",
 //         location: {
-//             lat: 47.62048931148176, 
+//             lat: 47.62048931148176,
 //             lng: -122.34938162883537
 //         },
 //         creator: "u1",
@@ -37,32 +36,35 @@ import PlaceList from "../components/PlaceList";
 export default function UserPlace() {
     const userId = useParams().userId;
     const [loadedPlaces, setLoadedPlaces] = useState(null);
-    const { isLoading, error, sendRequest, clearError}  = useHttpClient();
-    console.log(userId);
+    const { isLoading, error, sendRequest, clearError } = useHttpClient();
     useEffect(() => {
         const fetchPlaces = async () => {
             try {
                 const responseData = await sendRequest(
-                    `http://localhost:5999/api/places/user/${userId}`
+                    `${process.env.REACT_APP_BACKEND_URL}/places/user/${userId}`
                 );
                 setLoadedPlaces(responseData.places);
-            } catch (error) {
-                
-            }
-        }
+            } catch (error) {}
+        };
         fetchPlaces();
     }, [sendRequest, userId]);
 
     // const loadPlaces = PLACES.filter((place) => {
     //     return place.creator === userId;
     // });
+    const placeDeletedHandler = (deletedPlaceId) => {
+        setLoadedPlaces(loadedPlaces => {
+            return loadedPlaces.filter(place => place.id !== deletedPlaceId);
+        });
+    };
     return (
-       <React.Fragment>
-        <ErrorModal error={error} onClear={clearError}></ErrorModal>
-        {isLoading && <LoadingSpinner asOverlay></LoadingSpinner>}
-         <PlaceList items={loadedPlaces}></PlaceList>
-       </React.Fragment>
-       
-       
+        <React.Fragment>
+            <ErrorModal error={error} onClear={clearError}></ErrorModal>
+            {isLoading && <LoadingSpinner asOverlay></LoadingSpinner>}
+            <PlaceList
+                items={loadedPlaces}
+                onDeletePlace={placeDeletedHandler}
+            ></PlaceList>
+        </React.Fragment>
     );
 }

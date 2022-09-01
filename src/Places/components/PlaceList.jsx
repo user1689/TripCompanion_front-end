@@ -17,7 +17,6 @@ export default function PlaceList(props) {
             </div>
         );
     }
-
     return (
         <ul className="place-list">
             {props.items.map((place) => {
@@ -27,6 +26,7 @@ export default function PlaceList(props) {
                         key={place.id}
                         coordinates={place.location}
                         {...place}
+                        onDelete={props.onDeletePlace}
                     ></PlaceItem>
                 );
             })}
